@@ -23,7 +23,7 @@ class AutoPID {
      * @param[in] Ki Integral gain. This gain determines how much the output will respond based on the accumulation of past errors.
      * @param[in] Kd Derivative gain. This gain determines how much the output will respond based on the rate of change of the error.
      */
-    AutoPID(double *input, double *setpoint, double *output, double outputMin, double outputMax,
+    AutoPID(double *input, double *angSpeed, double *setpoint, double *output, double outputMin, double outputMax,
             double Kp, double Ki, double Kd);
 
     /**
@@ -153,7 +153,7 @@ class AutoPID {
     double _Kp, _Ki, _Kd;
     double _integral, _previousError;
     double _bangOn, _bangOff;
-    double *_input, *_setpoint, *_output;
+    double *_input, *_dInput, *_setpoint, *_output;
     double _outputMin, _outputMax;
     unsigned long _timeStep, _lastStep;
     bool _stopped;
@@ -177,7 +177,7 @@ class AutoPIDRelay : public AutoPID {
      * @param[in] Kd Derivative gain. This gain determines how much the output will respond based on the rate of change of the error.
      */
     AutoPIDRelay(double *input, double *setpoint, bool *relayState, double pulseWidth, double Kp, double Ki, double Kd)
-      : AutoPID(input, setpoint, &_pulseValue, 0, 1.0, Kp, Ki, Kd) {
+      : AutoPID(input, input, setpoint, &_pulseValue, 0, 1.0, Kp, Ki, Kd) {
       _relayState = relayState;
       _pulseWidth = pulseWidth;
     };

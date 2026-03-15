@@ -1,8 +1,10 @@
 #include "AutoPID-for-ESP-IDF.h"
+#include "esp_log.h"
 
-AutoPID::AutoPID(double *input, double *setpoint, double *output, double outputMin, double outputMax,
+AutoPID::AutoPID(double *input, double *dInput, double *setpoint, double *output, double outputMin, double outputMax,
                  double Kp, double Ki, double Kd) {
   _input = input;
+  _dInput = dInput;
   _setpoint = setpoint;
   _output = output;
   _outputMin = outputMin;
@@ -45,6 +47,7 @@ void AutoPID::run() {
     _stopped = false;
     reset();
   }
+  ESP_LOGI("PID", "run, input = %f, dInput = %f, setpoint = %f, out = %f", *_input, *_dInput, *_setpoint, *_output);
   //if bang thresholds are defined and we're outside of them, use bang-bang control
   if (_bangOn && ((*_setpoint - *_input) > _bangOn)) {
     *_output = _outputMax;
@@ -58,7 +61,8 @@ void AutoPID::run() {
       _lastStep = esp_timer_get_time() / 1000;
       double _error = *_setpoint - *_input;
       _integral += (_error + _previousError) / 2 * _dT / 1000.0;   //Riemann sum integral
-      double _dError = (_error - _previousError) / _dT / 1000.0;   //derivative
+      //double _dError = (_error - _previousError) / _dT / 1000.0;   //derivative
+      double _dError = *_dInput / _dT / 1000.0;
       _previousError = _error;
       double PID = (_Kp * _error) + (_Ki * _integral) + (_Kd * _dError);
       *_output = std::clamp(PID, _outputMin, _outputMax);
