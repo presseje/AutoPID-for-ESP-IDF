@@ -57,8 +57,8 @@ void AutoPID::run() {
     if (_dT >= _timeStep) {                     //if long enough, do PID calculations
       _lastStep = esp_timer_get_time() / 1000;
       double _error = *_setpoint - *_input;
-      _integral += (_error + _previousError) / 2 * _dT / 1000.0;   //Riemann sum integral
-      double _dError = (_error - _previousError) / _dT / 1000.0;   //derivative
+      _integral += (_error + _previousError) / 2 * (_dT / 1000.0);   //Riemann sum integral
+      double _dError = (_error - _previousError) / (_dT / 1000.0);   //derivative
       _previousError = _error;
       double PID = (_Kp * _error) + (_Ki * _integral) + (_Kd * _dError);
       *_output = std::clamp(PID, _outputMin, _outputMax);
