@@ -1,5 +1,7 @@
 #include "AutoPID-for-ESP-IDF.h"
 
+#include "esp_log.h"
+
 AutoPID::AutoPID(double *input, double *setpoint, double *output, double outputMin, double outputMax,
                  double Kp, double Ki, double Kd) {
   _input = input;
@@ -60,6 +62,9 @@ void AutoPID::run() {
       _integral += (_error + _previousError) / 2 * (_dT / 1000.0);   //Riemann sum integral
       double _dError = (_error - _previousError) / (_dT / 1000.0);   //derivative
       _previousError = _error;
+      //ESP_LOGI("pid", "dT %lu", _dT);
+      //ESP_LOGI("pid", "P %f I %f D %f", _error, _integral, _dError);
+      ESP_LOGI("pid", "kP %f kI %f kD %f", _Kp *_error, _Ki * _integral, _Kd *_dError);
       double PID = (_Kp * _error) + (_Ki * _integral) + (_Kd * _dError);
       *_output = std::clamp(PID, _outputMin, _outputMax);
     }
