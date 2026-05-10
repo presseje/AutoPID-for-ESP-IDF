@@ -12,6 +12,7 @@ AutoPID::AutoPID(double *input, double *setpoint, double *output, double outputM
   setGains(Kp, Ki, Kd);
   _timeStep = 1000;
   _lastStep = esp_timer_get_time() / 1000;  // ESP-IDF equivalent for millis()
+  _stopped = true;
 }//AutoPID::AutoPID
 
 void AutoPID::setGains(double Kp, double Ki, double Kd) {
@@ -50,21 +51,23 @@ void AutoPID::run() {
   //if bang thresholds are defined and we're outside of them, use bang-bang control
   if (_bangOn && ((*_setpoint - *_input) > _bangOn)) {
     *_output = _outputMax;
+    ESP_LOGI("pid", "MAX *_setpoint %f *_input %f", *_setpoint, *_input);
     _lastStep = esp_timer_get_time() / 1000;
   } else if (_bangOff && ((*_input - *_setpoint) > _bangOff)) {
     *_output = _outputMin;
+    ESP_LOGI("pid", "MIN *_setpoint %f *_input %f", *_setpoint, *_input);
     _lastStep = esp_timer_get_time() / 1000;
   } else {                                    //otherwise use PID control
     unsigned long _dT = (esp_timer_get_time() / 1000) - _lastStep;   //calculate time since last update
     if (_dT >= _timeStep) {                     //if long enough, do PID calculations
       _lastStep = esp_timer_get_time() / 1000;
       double _error = *_setpoint - *_input;
-      _integral += (_error + _previousError) / 2 * (_dT / 1000.0);   //Riemann sum integral
+      _integral += ((_error + _previousError) / 2) * (_dT / 1000.0);   //Riemann sum integral
       double _dError = (_error - _previousError) / (_dT / 1000.0);   //derivative
       _previousError = _error;
       //ESP_LOGI("pid", "dT %lu", _dT);
       //ESP_LOGI("pid", "P %f I %f D %f", _error, _integral, _dError);
-      ESP_LOGI("pid", "kP %f kI %f kD %f", _Kp *_error, _Ki * _integral, _Kd *_dError);
+      //ESP_LOGI("pid", "kP %f kI %f kD %f", _Kp *_error, _Ki * _integral, _Kd *_dError);
       double PID = (_Kp * _error) + (_Ki * _integral) + (_Kd * _dError);
       *_output = std::clamp(PID, _outputMin, _outputMax);
     }
